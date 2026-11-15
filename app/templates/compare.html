@@ -1,0 +1,96 @@
+{% extends "shell.html" %}
+{% block title %}Compare Scans — {{ APP_NAME }}{% endblock %}
+{% block page_title %}Compare Scans{% endblock %}
+
+{% macro opt(scans, selected) %}
+  {% for s in scans %}
+    <option value="{{ s.id }}" {% if selected and selected.id == s.id %}selected{% endif %}>#{{ s.id }} · {{ s.hostname }} · {{ s.risk_score }}</option>
+  {% endfor %}
+{% endmacro %}
+
+{% block content %}
+<div class="card">
+  <div class="card-head"><h3>Select two scans to compare</h3></div>
+  <form method="GET" action="{{ url_for('scan.compare') }}">
+    <div class="grid grid-3">
+      <div class="form-group" style="margin:0;">
+        <label for="a">Scan A (baseline)</label>
+        <select id="a" name="a"><option value="">Choose a scan</option>{{ opt(options, scan_a) }}</select>
+      </div>
+      <div class="form-group" style="margin:0;">
+        <label for="b">Scan B (comparison)</label>
+        <select id="b" name="b"><option value="">Choose a scan</option>{{ opt(options, scan_b) }}</select>
+      </div>
+      <div class="form-group flex" style="margin:0;align-items:flex-end;">
+        <button type="submit" class="btn btn-primary">Compare</button>
+      </div>
+    </div>
+  </form>
+</div>
+
+{% if scan_a and scan_b and diff %}
+<div class="grid grid-2 mt-4">
+  <div class="card">
+    <div class="card-head"><h3>Scan A · #{{ scan_a.id }}</h3><span class="badge badge-{{ scan_a.classification.split(' ')[0] }}">{{ scan_a.classification }}</span></div>
+    <div class="mono text-sm truncate">{{ scan_a.url }}</div>
+    <div class="stat accent mt-4"><div class="num">{{ scan_a.risk_score }}</div><div class="label">Risk score</div></div>
+  </div>
+  <div class="card">
+    <div class="card-head"><h3>Scan B · #{{ scan_b.id }}</h3><span class="badge badge-{{ scan_b.classification.split(' ')[0] }}">{{ scan_b.classification }}</span></div>
+    <div class="mono text-sm truncate">{{ scan_b.url }}</div>
+    <div class="stat accent mt-4"><div class="num">{{ scan_b.risk_score }}</div><div class="label">Risk score</div></div>
+  </div>
+</div>
+
+<div class="card mt-4">
+  <div class="card-head"><h3>Difference</h3></div>
+  <div class="flex" style="gap:24px;">
+    <div>
+      <div class="label muted">Score change</div>
+      <div class="num" style="font-size:1.6rem;font-weight:800;color:{{ 'var(--danger)' if diff.score_delta > 0 else ('var(--success)' if diff.score_delta < 0 else 'var(--text-secondary)') }};">
+        {{ '+' if diff.score_delta > 0 }}{{ diff.score_delta }}
+      </div>
+    </div>
+    <div>
+      <div class="label muted">Classification</div>
+      <div class="mt-4">
+        {% if diff.class_changed %}
+          <span class="badge badge-{{ scan_a.classification.split(' ')[0] }}">{{ scan_a.classification }}</span>
+          <span class="muted">&rarr;</span>
+          <span class="badge badge-{{ scan_b.classification.split(' ')[0] }}">{{ scan_b.classification }}</span>
+        {% else %}
+          <span class="chip">Unchanged</span>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="grid grid-2 mt-4">
+  <div class="card">
+    <div class="card-head"><h3>Indicators added in B</h3><span class="chip">{{ diff.added | length }}</span></div>
+    {% if diff.added %}
+      {% for ind in diff.added %}
+      <div class="flex between" style="padding:8px 0;border-bottom:1px solid var(--border);">
+        <span>{{ ind.name }}</span><span class="sev sev-{{ ind.severity }}">{{ ind.severity }}</span>
+      </div>
+      {% endfor %}
+    {% else %}<p class="muted mb-0">None.</p>{% endif %}
+  </div>
+  <div class="card">
+    <div class="card-head"><h3>Indicators removed in B</h3><span class="chip">{{ diff.removed | length }}</span></div>
+    {% if diff.removed %}
+      {% for ind in diff.removed %}
+      <div class="flex between" style="padding:8px 0;border-bottom:1px solid var(--border);">
+        <span>{{ ind.name }}</span><span class="sev sev-{{ ind.severity }}">{{ ind.severity }}</span>
+      </div>
+      {% endfor %}
+    {% else %}<p class="muted mb-0">None.</p>{% endif %}
+  </div>
+</div>
+{% elif scan_a or scan_b %}
+<div class="card mt-4"><div class="empty"><div class="ic">&#9878;</div><h3>Select two scans</h3><p class="muted">Choose a scan for both A and B, then press Compare.</p></div></div>
+{% else %}
+<div class="card mt-4"><div class="empty"><div class="ic">&#9878;</div><h3>Compare two scans</h3><p class="muted">Pick two of your scans above to see how their risk scores and indicators differ.</p></div></div>
+{% endif %}
+{% endblock %}

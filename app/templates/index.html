@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% block title %}{{ APP_NAME }} — Know the risk before you click{% endblock %}
+
+{% block content %}
+<!-- 1. HERO -->
+<section class="hero center">
+  <span class="eyebrow">Explainable URL Risk Intelligence</span>
+  <h1>Know the risk before you click.</h1>
+  <p class="lead">
+    Analyze suspicious URLs using transparent security indicators and explainable
+    risk assessment — no black boxes, no guesswork.
+  </p>
+  <div class="flex" style="justify-content:center;">
+    {% if current_user.is_authenticated %}
+      <a href="{{ url_for('scan.scanner') }}" class="btn btn-primary">Analyze a URL</a>
+      <a href="{{ url_for('main.insights') }}" class="btn btn-ghost">Explore Security Insights</a>
+    {% else %}
+      <a href="{{ url_for('auth.register') }}" class="btn btn-primary">Analyze a URL</a>
+      <a href="{{ url_for('main.insights') }}" class="btn btn-ghost">Explore Security Insights</a>
+    {% endif %}
+  </div>
+
+  <!-- Lightweight product preview mockup -->
+  <div class="card mockup">
+    <div class="mockup-bar">
+      <div class="flex" style="gap:6px;">
+        <span class="dot critical"></span><span class="dot suspicious"></span><span class="dot safe"></span>
+      </div>
+      <span class="text-xs muted mono">phishshield / scan-result</span>
+    </div>
+    <div class="grid grid-2" style="gap:0;">
+      <div style="padding:24px;border-right:1px solid var(--border);text-align:center;">
+        <div class="gauge" style="--val:82;--gcolor:var(--danger);width:130px;height:130px;">
+          <div class="inner" style="width:100px;height:100px;"><div class="n" style="font-size:1.8rem;">82</div><div class="d">/100</div></div>
+        </div>
+        <div style="margin-top:12px;"><span class="badge badge-CRITICAL">CRITICAL</span></div>
+      </div>
+      <div style="padding:24px;">
+        <div class="text-xs muted mono truncate">http://192.0.2.10/verify-account</div>
+        <div class="meter" style="margin-top:14px;"><div class="top"><span>Domain analysis</span><span>80%</span></div><div class="track"><div class="fill crit" style="width:80%;"></div></div></div>
+        <div class="meter"><div class="top"><span>Protocol security</span><span>60%</span></div><div class="track"><div class="fill high" style="width:60%;"></div></div></div>
+        <div class="meter"><div class="top"><span>URL structure</span><span>90%</span></div><div class="track"><div class="fill crit" style="width:90%;"></div></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 2. HOW IT WORKS -->
+<h2 class="section-title center">How it works</h2>
+<div class="grid grid-4">
+  <div class="card"><div class="stat"><span class="ic">&#9993;</span><strong>1. Submit</strong><span class="muted text-sm">Paste any URL. We analyze the string only — never visiting the site.</span></div></div>
+  <div class="card"><div class="stat"><span class="ic">&#128270;</span><strong>2. Extract</strong><span class="muted text-sm">18+ features are extracted: protocol, hostname, keywords, structure.</span></div></div>
+  <div class="card"><div class="stat"><span class="ic">&#9878;</span><strong>3. Score</strong><span class="muted text-sm">Each indicator adds transparent points, normalized to 0–100.</span></div></div>
+  <div class="card"><div class="stat"><span class="ic">&#128172;</span><strong>4. Explain</strong><span class="muted text-sm">You get a classification with a reason for every finding.</span></div></div>
+</div>
+
+<!-- 3 + 4. EXPLAINABLE DETECTION + RISK SCORING -->
+<div class="grid grid-2 mt-5">
+  <div class="card">
+    <span class="eyebrow">Explainable detection</span>
+    <h3 style="margin-top:8px;">Every point has a reason</h3>
+    <p class="muted">PhishShield is a transparent, rule-based engine. There is no opaque
+      model — each risk point maps to a named indicator you can inspect and explain.</p>
+    <div class="waterfall">
+      <div class="wf-row"><span>IP-based hostname</span><span class="amt">+20</span></div>
+      <div class="wf-row"><span>Insecure protocol (HTTP)</span><span class="amt">+15</span></div>
+      <div class="wf-row"><span>Suspicious keyword</span><span class="amt">+10</span></div>
+      <div class="wf-total"><span>Heuristic risk score</span><span>55 / 100</span></div>
+    </div>
+  </div>
+  <div class="card">
+    <span class="eyebrow">Risk scoring</span>
+    <h3 style="margin-top:8px;">Four clear risk bands</h3>
+    <p class="muted">Scores map to intuitive classifications so anyone can act on them.</p>
+    <div class="col">
+      <div class="flex between"><span class="badge badge-SAFE">SAFE</span><span class="muted text-sm">0–29 · few or no indicators</span></div>
+      <div class="flex between"><span class="badge badge-SUSPICIOUS">SUSPICIOUS</span><span class="muted text-sm">30–59 · treat with caution</span></div>
+      <div class="flex between"><span class="badge badge-HIGH">HIGH RISK</span><span class="muted text-sm">60–79 · avoid interaction</span></div>
+      <div class="flex between"><span class="badge badge-CRITICAL">CRITICAL</span><span class="muted text-sm">80–100 · do not visit</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- 5. SECURITY INDICATORS -->
+<h2 class="section-title center">Security indicators we look for</h2>
+<div class="grid grid-3">
+  <div class="card"><ul class="list-clean"><li>Missing HTTPS</li><li>IP address as hostname</li><li>Suspicious keywords</li></ul></div>
+  <div class="card"><ul class="list-clean"><li>Excessive subdomains &amp; hyphens</li><li>Suspicious TLDs</li><li>"@" symbol &amp; URL encoding</li></ul></div>
+  <div class="card"><ul class="list-clean"><li>Punycode / IDN look-alikes</li><li>Possible typosquatting</li><li>Unusual URL structure</li></ul></div>
+</div>
+<div class="center mt-4"><a href="{{ url_for('main.insights') }}" class="btn btn-ghost">See the full indicator library &rarr;</a></div>
+
+<!-- 6. AUTH / SECURITY -->
+<div class="grid grid-2 mt-5">
+  <div class="card">
+    <span class="eyebrow">Built securely</span>
+    <h3 style="margin-top:8px;">Security by design</h3>
+    <ul class="list-clean">
+      <li>Hashed passwords (never stored in plaintext)</li>
+      <li>Role-based access control (USER / ADMIN)</li>
+      <li>CSRF protection, security headers, input validation</li>
+      <li>Security event logging &amp; account lockout</li>
+    </ul>
+  </div>
+  <div class="card">
+    <span class="eyebrow">Learn as you go</span>
+    <h3 style="margin-top:8px;">Security awareness built in</h3>
+    <p class="muted">A dedicated awareness module and an interactive quiz teach how phishing
+      works and how to inspect a URL — making PhishShield educational, not just technical.</p>
+    <a href="{{ url_for('main.awareness') }}" class="btn btn-ghost btn-sm">Open the awareness module</a>
+  </div>
+</div>
+
+<!-- 9. DISCLAIMER -->
+<div class="disclaimer">
+  <strong>Disclaimer:</strong> {{ APP_NAME }} provides heuristic URL risk assessment for
+  educational and defensive purposes. Results may contain false positives or false negatives
+  and should not be interpreted as definitive proof that a URL is malicious or safe.
+</div>
+{% endblock %}

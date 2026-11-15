@@ -1,0 +1,51 @@
+{% extends "shell.html" %}
+{% block title %}Users — {{ APP_NAME }} Admin{% endblock %}
+{% block page_title %}User Management{% endblock %}
+
+{% block content %}
+<div class="card-head">
+  <h2 style="margin:0;">Registered users</h2>
+  <a href="{{ url_for('admin.system_health') }}" class="btn btn-ghost btn-sm">System Health</a>
+</div>
+
+<div class="card mt-4">
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>ID</th><th>Username</th><th>Email</th><th>Role</th><th>Status</th><th>Created</th><th>Actions</th></tr></thead>
+      <tbody>
+        {% for u in users %}
+        <tr>
+          <td>#{{ u.id }}</td>
+          <td><strong>{{ u.username }}</strong>{% if u.id == current_user.id %} <span class="chip">you</span>{% endif %}</td>
+          <td class="mono text-sm">{{ u.email }}</td>
+          <td><span class="badge {{ 'badge-CRITICAL' if u.is_admin else 'badge-accent' }}">{{ u.role }}</span></td>
+          <td><span class="badge {{ 'badge-SAFE' if u.is_active else 'badge-neutral' }}">{{ 'Active' if u.is_active else 'Disabled' }}</span></td>
+          <td class="text-sm">{{ u.created_at.strftime('%Y-%m-%d') }}</td>
+          <td>
+            {% if u.id != current_user.id %}
+            <div class="flex" style="gap:6px;">
+              <form method="POST" action="{{ url_for('admin.toggle_user_active', user_id=u.id) }}"
+                    data-confirm="{{ 'Deactivate' if u.is_active else 'Activate' }} user '{{ u.username }}'?">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button class="btn btn-ghost btn-sm">{{ 'Deactivate' if u.is_active else 'Activate' }}</button>
+              </form>
+              <form method="POST" action="{{ url_for('admin.change_user_role', user_id=u.id) }}"
+                    data-confirm="Change role of '{{ u.username }}' to {{ 'USER' if u.is_admin else 'ADMIN' }}?">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="role" value="{{ 'USER' if u.is_admin else 'ADMIN' }}">
+                <button class="btn btn-ghost btn-sm">Make {{ 'USER' if u.is_admin else 'ADMIN' }}</button>
+              </form>
+            </div>
+            {% else %}
+            <span class="text-sm muted">—</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+<p class="hint">Password hashes are never displayed. Only the salted hash is stored, never the
+  plaintext password. Destructive actions require confirmation.</p>
+{% endblock %}

@@ -1,0 +1,76 @@
+{% extends "shell.html" %}
+{% block title %}Dashboard — {{ APP_NAME }}{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="card-head">
+  <div>
+    <h2 style="margin:0;">Welcome back, {{ current_user.username }}</h2>
+    <p class="muted mb-0">Your personal URL risk overview.</p>
+  </div>
+  <a href="{{ url_for('scan.scanner') }}" class="btn btn-primary">Analyze a URL</a>
+</div>
+
+<div class="grid grid-4 mt-4">
+  <div class="card stat accent"><span class="ic">&#128200;</span><div class="num">{{ stats.total }}</div><div class="label">Total scans</div></div>
+  <div class="card stat safe"><span class="ic">&#9989;</span><div class="num">{{ stats.safe }}</div><div class="label">Safe</div></div>
+  <div class="card stat suspicious"><span class="ic">&#9888;</span><div class="num">{{ stats.suspicious }}</div><div class="label">Suspicious</div></div>
+  <div class="card stat critical"><span class="ic">&#128680;</span><div class="num">{{ stats.high_risk + stats.critical }}</div><div class="label">High / Critical</div></div>
+</div>
+
+<div class="grid grid-2 mt-4">
+  <div class="card">
+    <div class="card-head"><h3>Risk distribution</h3>{% if stats.total %}<span class="chip">avg {{ avg_score }}/100</span>{% endif %}</div>
+    {% if stats.total > 0 %}
+      <div class="chart-box"><canvas id="riskChart" height="240"></canvas></div>
+    {% else %}
+      <div class="empty"><div class="ic">&#128202;</div><h3>No data yet</h3><p class="muted">Run your first scan to see analytics here.</p><a href="{{ url_for('scan.scanner') }}" class="btn btn-primary btn-sm">Analyze URL</a></div>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <div class="card-head"><h3>Recent scans</h3><a class="text-sm" href="{{ url_for('scan.history') }}">View all &rarr;</a></div>
+    {% if recent %}
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>URL</th><th>Score</th><th>Class</th><th></th></tr></thead>
+          <tbody>
+            {% for s in recent %}
+            <tr>
+              <td class="mono truncate" style="max-width:210px;">{{ s.url }}</td>
+              <td>{{ s.risk_score }}</td>
+              <td><span class="badge badge-{{ s.classification.split(' ')[0] }}">{{ s.classification }}</span></td>
+              <td><a href="{{ url_for('scan.scan_result', scan_id=s.id) }}">View</a></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="empty"><div class="ic">&#128269;</div><h3>No scans yet</h3><p class="muted">Analyze your first URL to begin building your scan history.</p></div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% if stats.total > 0 %}
+<script nonce="{{ csp_nonce }}" src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script nonce="{{ csp_nonce }}">
+  var css = getComputedStyle(document.documentElement);
+  new Chart(document.getElementById('riskChart'), {
+    type: 'doughnut',
+    data: {
+      labels: ['Safe', 'Suspicious', 'High Risk', 'Critical'],
+      datasets: [{
+        data: [{{ stats.safe }}, {{ stats.suspicious }}, {{ stats.high_risk }}, {{ stats.critical }}],
+        backgroundColor: ['#22c55e', '#f5b301', '#f97316', '#ef4444'],
+        borderColor: css.getPropertyValue('--surface').trim(),
+        borderWidth: 2
+      }]
+    },
+    options: { plugins: { legend: { position: 'bottom', labels: { color: css.getPropertyValue('--text-secondary').trim() } } }, cutout: '62%' }
+  });
+</script>
+{% endif %}
+{% endblock %}

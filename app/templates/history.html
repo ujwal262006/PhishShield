@@ -1,0 +1,87 @@
+{% extends "shell.html" %}
+{% block title %}Scan History — {{ APP_NAME }}{% endblock %}
+{% block page_title %}Scan History{% endblock %}
+
+{% block content %}
+<div class="card-head">
+  <h2 style="margin:0;">Your scan history</h2>
+  <div class="flex">
+    <a href="{{ url_for('scan.compare') }}" class="btn btn-ghost btn-sm">Compare scans</a>
+    {% if pagination.total %}<a href="{{ url_for('scan.export_history_csv') }}" class="btn btn-ghost btn-sm">Export CSV</a>{% endif %}
+  </div>
+</div>
+
+<form method="GET" action="{{ url_for('scan.history') }}" class="card mt-4">
+  <div class="grid grid-4">
+    <div class="form-group" style="margin:0;">
+      <label for="q">Search URL</label>
+      <input type="text" id="q" name="q" value="{{ q }}" placeholder="example.com">
+    </div>
+    <div class="form-group" style="margin:0;">
+      <label for="classification">Classification</label>
+      <select id="classification" name="classification">
+        <option value="">All</option>
+        {% for c in ['SAFE', 'SUSPICIOUS', 'HIGH RISK', 'CRITICAL'] %}
+          <option value="{{ c }}" {% if classification == c %}selected{% endif %}>{{ c }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="form-group" style="margin:0;">
+      <label for="min_score">Min score</label>
+      <input type="number" id="min_score" name="min_score" min="0" max="100" value="{{ min_score }}" placeholder="0">
+    </div>
+    <div class="form-group" style="margin:0;">
+      <label for="sort">Sort by</label>
+      <select id="sort" name="sort">
+        <option value="newest" {% if sort == 'newest' %}selected{% endif %}>Newest first</option>
+        <option value="oldest" {% if sort == 'oldest' %}selected{% endif %}>Oldest first</option>
+        <option value="score_high" {% if sort == 'score_high' %}selected{% endif %}>Highest score</option>
+        <option value="score_low" {% if sort == 'score_low' %}selected{% endif %}>Lowest score</option>
+      </select>
+    </div>
+  </div>
+  <div class="flex mt-4">
+    <button type="submit" class="btn btn-primary btn-sm">Apply filters</button>
+    <a href="{{ url_for('scan.history') }}" class="btn btn-ghost btn-sm">Clear</a>
+  </div>
+</form>
+
+<div class="card mt-4">
+  {% if pagination.items %}
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Date</th><th>URL</th><th>Host</th><th>Score</th><th>Class</th><th></th></tr></thead>
+      <tbody>
+        {% for s in pagination.items %}
+        <tr>
+          <td class="text-sm nowrap">{{ s.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+          <td class="mono truncate" style="max-width:280px;">{{ s.url }}</td>
+          <td class="mono">{{ s.hostname }}</td>
+          <td>{{ s.risk_score }}</td>
+          <td><span class="badge badge-{{ s.classification.split(' ')[0] }}">{{ s.classification }}</span></td>
+          <td><a href="{{ url_for('scan.scan_result', scan_id=s.id) }}">View</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="pagination">
+    {% if pagination.has_prev %}
+      <a href="{{ url_for('scan.history', page=pagination.prev_num, q=q, classification=classification, min_score=min_score, sort=sort) }}">&laquo; Prev</a>
+    {% endif %}
+    <span class="cur">Page {{ pagination.page }} of {{ pagination.pages }}</span>
+    {% if pagination.has_next %}
+      <a href="{{ url_for('scan.history', page=pagination.next_num, q=q, classification=classification, min_score=min_score, sort=sort) }}">Next &raquo;</a>
+    {% endif %}
+  </div>
+  {% else %}
+    <div class="empty">
+      <div class="ic">&#128203;</div>
+      <h3>No scans found</h3>
+      <p class="muted">{% if q or classification or min_score %}Try clearing your filters, or{% else %}Analyze your first URL to begin building your history.{% endif %}</p>
+      <a href="{{ url_for('scan.scanner') }}" class="btn btn-primary btn-sm">Analyze a URL</a>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

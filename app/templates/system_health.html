@@ -1,0 +1,45 @@
+{% extends "shell.html" %}
+{% block title %}System Health — {{ APP_NAME }}{% endblock %}
+{% block page_title %}System Health{% endblock %}
+
+{% block content %}
+<div class="grid grid-4">
+  <div class="card stat accent"><span class="ic">&#128994;</span><div class="num" style="font-size:1.3rem;">{{ health.app_status | title }}</div><div class="label">Application</div></div>
+  <div class="card stat {{ 'safe' if health.db_status == 'connected' else 'critical' }}"><span class="ic">&#128190;</span><div class="num" style="font-size:1.3rem;">{{ health.db_status | title }}</div><div class="label">Database</div></div>
+  <div class="card stat"><span class="ic">&#128101;</span><div class="num">{{ health.total_users }}</div><div class="label">Users</div></div>
+  <div class="card stat"><span class="ic">&#128200;</span><div class="num">{{ health.total_scans }}</div><div class="label">Scans</div></div>
+</div>
+
+<div class="grid grid-2 mt-4">
+  <div class="card">
+    <div class="card-head"><h3>Environment</h3></div>
+    <div class="col">
+      <div class="flex between"><span class="muted">App version</span><span class="mono">v{{ health.app_version }}</span></div>
+      <hr class="divider">
+      <div class="flex between"><span class="muted">Environment</span><span class="chip">{{ health.environment }}</span></div>
+      <hr class="divider">
+      <div class="flex between"><span class="muted">Debug mode</span><span class="badge {{ 'badge-SUSPICIOUS' if health.debug else 'badge-SAFE' }}">{{ 'On' if health.debug else 'Off' }}</span></div>
+      <hr class="divider">
+      <div class="flex between"><span class="muted">Rate limiting</span><span class="badge {{ 'badge-SAFE' if health.rate_limiting else 'badge-neutral' }}">{{ 'Enabled' if health.rate_limiting else 'Disabled' }}</span></div>
+      <hr class="divider">
+      <div class="flex between"><span class="muted">Python</span><span class="mono">{{ health.python_version }}</span></div>
+      <hr class="divider">
+      <div class="flex between"><span class="muted">Flask</span><span class="mono">{{ health.flask_version }}</span></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-head"><h3>Storage &amp; records</h3></div>
+    <div class="col">
+      <div class="flex between"><span class="muted">Database size</span><span class="mono">{{ health.db_size_kb if health.db_size_kb is not none else 'n/a' }} KB</span></div>
+      <hr class="divider">
+      <div class="flex between"><span class="muted">Total users</span><span>{{ health.total_users }}</span></div>
+      <hr class="divider">
+      <div class="flex between"><span class="muted">Total scans</span><span>{{ health.total_scans }}</span></div>
+      <hr class="divider">
+      <div class="flex between"><span class="muted">Security events</span><span>{{ health.total_events }}</span></div>
+    </div>
+    <p class="hint mt-4">This page intentionally omits secret keys, credentials, and
+      filesystem-sensitive paths.</p>
+  </div>
+</div>
+{% endblock %}

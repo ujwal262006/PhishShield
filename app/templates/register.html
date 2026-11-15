@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Register — {{ APP_NAME }}{% endblock %}
+
+{% block content %}
+<div class="card form-narrow">
+  <div class="center" style="margin-bottom:8px;">
+    <span class="eyebrow">Get started</span>
+    <h2 style="margin:6px 0 0;">Create your account</h2>
+  </div>
+  <form method="POST" action="{{ url_for('auth.register') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="form-group">
+      <label for="username">Username</label>
+      <input type="text" id="username" name="username" value="{{ username or '' }}"
+             autocomplete="username" required autofocus>
+      <div class="hint">3-32 characters: letters, numbers, or underscores.</div>
+    </div>
+    <div class="form-group">
+      <label for="email">Email</label>
+      <input type="email" id="email" name="email" value="{{ email or '' }}"
+             autocomplete="email" required>
+    </div>
+    <div class="form-group">
+      <label for="password">Password</label>
+      <input type="password" id="password" name="password" autocomplete="new-password" required>
+      <div class="hint">Min 8 chars with uppercase, lowercase, number, and special character.</div>
+    </div>
+    <button type="submit" class="btn btn-primary btn-block">Create account</button>
+  </form>
+  <p class="hint center">Already have an account? <a href="{{ url_for('auth.login') }}">Sign in</a>.</p>
+</div>
+{% endblock %}

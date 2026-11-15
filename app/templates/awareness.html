@@ -1,0 +1,107 @@
+{% extends "shell.html" if current_user.is_authenticated else "base.html" %}
+{% block title %}Security Awareness — {{ APP_NAME }}{% endblock %}
+{% block page_title %}Security Awareness{% endblock %}
+
+{% block content %}
+<div>
+  <span class="eyebrow">Learn</span>
+  <h2 style="margin:6px 0 0;">How to Identify a Phishing URL</h2>
+  <p class="muted">Phishing relies on tricking people, not just machines. These tips help you
+    spot dangerous links before you click or type anything.</p>
+</div>
+
+<div class="grid grid-2 mt-4">
+  <div class="card">
+    <div class="feature-item"><span class="ic">&#128274;</span><div><strong>Check for HTTPS</strong><p class="muted text-sm mb-0">A padlock means traffic is encrypted, but HTTPS alone does not prove a site is trustworthy — phishing sites use it too.</p></div></div>
+    <div class="feature-item"><span class="ic">&#127760;</span><div><strong>Look at the real domain</strong><p class="muted text-sm mb-0">Read the domain right before the first single slash. Extra subdomains or an "@" can disguise the true host.</p></div></div>
+    <div class="feature-item"><span class="ic">&#128269;</span><div><strong>Watch for typosquatting</strong><p class="muted text-sm mb-0">Look-alikes like paypa1.com or g00gle.com swap letters for numbers to imitate a brand.</p></div></div>
+    <div class="feature-item"><span class="ic">&#128207;</span><div><strong>Beware very long URLs</strong><p class="muted text-sm mb-0">Long links can hide the true destination or stop you reading carefully.</p></div></div>
+  </div>
+  <div class="card">
+    <div class="feature-item"><span class="ic">&#128421;</span><div><strong>IP-based URLs</strong><p class="muted text-sm mb-0">Legitimate services rarely send you to a raw IP like http://192.0.2.10/login.</p></div></div>
+    <div class="feature-item"><span class="ic">&#128273;</span><div><strong>Suspicious keywords</strong><p class="muted text-sm mb-0">"verify", "secure", "account", "update" packed into a URL are common in credential-harvesting pages.</p></div></div>
+    <div class="feature-item"><span class="ic">&#9888;</span><div><strong>Urgency &amp; social engineering</strong><p class="muted text-sm mb-0">"Your account will close in 24 hours" creates panic so you act before you think.</p></div></div>
+    <div class="feature-item"><span class="ic">&#128683;</span><div><strong>Never enter credentials into suspicious links</strong><p class="muted text-sm mb-0">When in doubt, type the known address yourself instead of clicking.</p></div></div>
+  </div>
+</div>
+
+<div class="grid grid-2 mt-4">
+  <div class="card">
+    <h3>Password hygiene &amp; MFA</h3>
+    <ul class="list-clean">
+      <li>Use long, unique passwords for every site</li>
+      <li>Never reuse your email password elsewhere</li>
+      <li>Turn on multi-factor authentication (MFA) where available</li>
+      <li>Use a reputable password manager</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h3>Reporting suspicious links</h3>
+    <ul class="list-clean">
+      <li>Do not forward the link to others</li>
+      <li>Report it to your IT/security team or email provider</li>
+      <li>Delete the message once reported</li>
+      <li>If you entered credentials, change them immediately and enable MFA</li>
+    </ul>
+  </div>
+</div>
+
+<!-- Quick Check quiz -->
+<div class="card mt-5" id="quiz">
+  <div class="card-head"><h3>Quick Check &mdash; test your knowledge</h3><span class="chip" id="quiz-progress">5 questions</span></div>
+  <div id="quiz-body"></div>
+  <div id="quiz-result" class="hidden"></div>
+</div>
+
+<div class="disclaimer">
+  Cybercrime awareness is the strongest defense. PhishShield's automated checks support, but do
+  not replace, careful human judgment.
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script nonce="{{ csp_nonce }}">
+  var QUIZ = [
+    { q: "A link shows a padlock and https://. Is it definitely safe?", options: ["Yes, HTTPS proves safety", "No, HTTPS only means encryption, not trust"], answer: 1 },
+    { q: "Which is most suspicious in a URL?", options: ["A raw IP address as the hostname", "A path like /about", "The word 'home'"], answer: 0 },
+    { q: "paypa1-secure.example is an example of what?", options: ["A safe official domain", "Possible typosquatting / look-alike", "An encrypted domain"], answer: 1 },
+    { q: "An email says 'Verify in 24h or lose your account.' This is a sign of:", options: ["Good customer service", "Urgency / social engineering", "A software bug"], answer: 1 },
+    { q: "Best action for a suspicious login link you did not expect?", options: ["Enter your password to check", "Do not click; navigate to the site yourself", "Forward it to friends"], answer: 1 }
+  ];
+  var idx = 0, score = 0;
+  var body = document.getElementById("quiz-body");
+  var result = document.getElementById("quiz-result");
+  var progress = document.getElementById("quiz-progress");
+
+  function render() {
+    var item = QUIZ[idx];
+    progress.textContent = "Question " + (idx + 1) + " of " + QUIZ.length;
+    body.innerHTML = "<p><strong>" + item.q + "</strong></p>" +
+      item.options.map(function (o, i) {
+        return '<button class="btn btn-ghost btn-block" style="justify-content:flex-start;margin-bottom:8px;" data-choice="' + i + '">' + o + "</button>";
+      }).join("");
+    body.querySelectorAll("[data-choice]").forEach(function (b) {
+      b.addEventListener("click", function () { choose(parseInt(b.getAttribute("data-choice"), 10)); });
+    });
+  }
+  function choose(i) {
+    if (i === QUIZ[idx].answer) { score++; PhishShield.toast("Correct!", "success"); }
+    else { PhishShield.toast("Not quite — review the tips above.", "warning"); }
+    idx++;
+    if (idx < QUIZ.length) render(); else finish();
+  }
+  function finish() {
+    body.classList.add("hidden");
+    progress.textContent = "Complete";
+    result.classList.remove("hidden");
+    var pct = Math.round((score / QUIZ.length) * 100);
+    result.innerHTML = '<div class="empty"><div class="ic">&#127891;</div>' +
+      "<h3>You scored " + score + " / " + QUIZ.length + " (" + pct + "%)</h3>" +
+      '<p class="muted">' + (pct >= 80 ? "Great awareness! Keep applying these checks." : "Review the tips above and try again.") + "</p>" +
+      '<button class="btn btn-primary btn-sm" data-retake>Retake quiz</button></div>';
+    var retake = result.querySelector("[data-retake]");
+    if (retake) retake.addEventListener("click", function () { location.reload(); });
+  }
+  render();
+</script>
+{% endblock %}

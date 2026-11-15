@@ -1,0 +1,62 @@
+{% extends "shell.html" %}
+{% block title %}All Scans — {{ APP_NAME }} Admin{% endblock %}
+{% block page_title %}All Scans{% endblock %}
+
+{% block content %}
+<div class="card-head">
+  <h2 style="margin:0;">All scan records</h2>
+  {% if pagination.total %}<a href="{{ url_for('admin.admin_scans_export', q=q, classification=classification) }}" class="btn btn-ghost btn-sm">Export CSV</a>{% endif %}
+</div>
+
+<form method="GET" action="{{ url_for('admin.admin_scans') }}" class="card mt-4">
+  <div class="grid grid-3">
+    <div class="form-group" style="margin:0;">
+      <label for="q">Search URL</label>
+      <input type="text" id="q" name="q" value="{{ q }}">
+    </div>
+    <div class="form-group" style="margin:0;">
+      <label for="classification">Classification</label>
+      <select id="classification" name="classification">
+        <option value="">All</option>
+        {% for c in ['SAFE', 'SUSPICIOUS', 'HIGH RISK', 'CRITICAL'] %}
+          <option value="{{ c }}" {% if classification == c %}selected{% endif %}>{{ c }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="form-group flex" style="margin:0;align-items:flex-end;">
+      <button type="submit" class="btn btn-primary btn-sm">Filter</button>
+      <a href="{{ url_for('admin.admin_scans') }}" class="btn btn-ghost btn-sm">Reset</a>
+    </div>
+  </div>
+</form>
+
+<div class="card mt-4">
+  {% if pagination.items %}
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>ID</th><th>User</th><th>Date</th><th>URL</th><th>Score</th><th>Class</th><th></th></tr></thead>
+      <tbody>
+        {% for s in pagination.items %}
+        <tr>
+          <td>#{{ s.id }}</td>
+          <td>{{ s.user.username if s.user else s.user_id }}</td>
+          <td class="text-sm nowrap">{{ s.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+          <td class="mono truncate" style="max-width:240px;">{{ s.url }}</td>
+          <td>{{ s.risk_score }}</td>
+          <td><span class="badge badge-{{ s.classification.split(' ')[0] }}">{{ s.classification }}</span></td>
+          <td><a href="{{ url_for('scan.scan_result', scan_id=s.id) }}">View</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="pagination">
+    {% if pagination.has_prev %}<a href="{{ url_for('admin.admin_scans', page=pagination.prev_num, q=q, classification=classification) }}">&laquo; Prev</a>{% endif %}
+    <span class="cur">Page {{ pagination.page }} of {{ pagination.pages }}</span>
+    {% if pagination.has_next %}<a href="{{ url_for('admin.admin_scans', page=pagination.next_num, q=q, classification=classification) }}">Next &raquo;</a>{% endif %}
+  </div>
+  {% else %}
+    <div class="empty"><div class="ic">&#128200;</div><h3>No scan records</h3><p class="muted">No scans match the current filters.</p></div>
+  {% endif %}
+</div>
+{% endblock %}

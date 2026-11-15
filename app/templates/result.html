@@ -1,0 +1,149 @@
+{% extends "shell.html" %}
+{% block title %}Scan Report #{{ scan.id }} — {{ APP_NAME }}{% endblock %}
+{% block page_title %}Scan Report{% endblock %}
+
+{% set cls = scan.classification %}
+{% set badge = cls.split(' ')[0] %}
+{% set ring = '#22c55e' if cls == 'SAFE' else ('#f5b301' if cls == 'SUSPICIOUS' else ('#f97316' if cls == 'HIGH RISK' else '#ef4444')) %}
+{% set fillcls = 'safe' if cls == 'SAFE' else ('warn' if cls == 'SUSPICIOUS' else ('high' if cls == 'HIGH RISK' else 'crit')) %}
+
+{% block content %}
+<!-- Report header / actions -->
+<div class="card-head no-print">
+  <div>
+    <span class="eyebrow">Security report</span>
+    <h2 style="margin:6px 0 0;">Scan #{{ scan.id }}</h2>
+  </div>
+  <div class="flex">
+    <a href="{{ url_for('scan.scanner') }}" class="btn btn-ghost btn-sm">New scan</a>
+    <a href="{{ url_for('scan.export_json', scan_id=scan.id) }}" class="btn btn-ghost btn-sm">Export JSON</a>
+    <button class="btn btn-ghost btn-sm" data-print>Print / PDF</button>
+  </div>
+</div>
+
+<!-- Score + classification + breakdown -->
+<div class="grid grid-2">
+  <div class="card center">
+    <div class="gauge" style="--val: {{ scan.risk_score }}; --gcolor: {{ ring }};">
+      <div class="inner">
+        <div class="n">{{ scan.risk_score }}</div>
+        <div class="d">/ 100 risk</div>
+      </div>
+    </div>
+    <div style="margin-top:16px;">
+      <span class="badge badge-{{ badge }}" style="font-size:0.95rem;padding:8px 18px;">{{ cls }}</span>
+    </div>
+    <p class="muted text-sm" style="margin-top:14px;">{{ scan.recommendation }}</p>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><h3>Risk breakdown</h3></div>
+    {% for row in breakdown %}
+    <div class="meter">
+      <div class="top"><span>{{ row.category }}</span><span>{{ row.percent }}%</span></div>
+      <div class="track"><div class="fill {{ fillcls }}" style="width: {{ row.percent }}%;"></div></div>
+    </div>
+    {% endfor %}
+    <p class="hint">Percentages are normalized visualization values (category points vs. a
+      per-category maximum), not probabilities of maliciousness.</p>
+  </div>
+</div>
+
+<!-- Why this URL is risky (waterfall) -->
+<div class="card mt-4">
+  <div class="card-head"><h3>Why this URL was scored this way</h3></div>
+  {% if waterfall.steps %}
+    <div class="waterfall">
+      {% for step in waterfall.steps %}
+      <div class="wf-row"><span>{{ step.name }}</span><span class="amt">+{{ step.points }}</span></div>
+      {% endfor %}
+      {% if waterfall.raw_total != waterfall.clamped_total %}
+      <div class="wf-row"><span class="muted">Raw total {{ waterfall.raw_total }} clamped to 100</span><span class="amt">= {{ waterfall.clamped_total }}</span></div>
+      {% endif %}
+      <div class="wf-total"><span>Heuristic risk score</span><span>{{ scan.risk_score }} / 100 &rarr; {{ cls }}</span></div>
+    </div>
+  {% else %}
+    <div class="empty"><div class="ic">&#9989;</div><h3>No risk contributors</h3><p class="muted">No suspicious indicators were detected. Always verify the domain independently.</p></div>
+  {% endif %}
+</div>
+
+<!-- URL forensics + metadata -->
+<div class="grid grid-2 mt-4">
+  <div class="card">
+    <div class="card-head"><h3>URL forensics</h3></div>
+    <div class="tree">
+      <div class="lvl1"><span class="seg">{{ forensics.protocol }}://</span></div>
+      <div class="lvl2">&#8627; <span class="seg">{{ forensics.hostname }}</span>{% if forensics.port %}<span class="muted">:{{ forensics.port }}</span>{% endif %}</div>
+      {% if forensics.path %}<div class="lvl3">&#8627; <span class="seg">{{ forensics.path }}</span></div>{% endif %}
+      {% if forensics.query %}<div class="lvl3">&#8627; ?<span class="seg">{{ forensics.query }}</span></div>{% endif %}
+      {% if forensics.fragment %}<div class="lvl3">&#8627; #<span class="seg">{{ forensics.fragment }}</span></div>{% endif %}
+    </div>
+    <div class="forensics mt-4">
+      <div><span class="k">Protocol:</span> <span class="v">{{ forensics.protocol or '—' }}</span></div>
+      <div><span class="k">Hostname:</span> <span class="v">{{ forensics.hostname or '—' }}</span></div>
+      <div><span class="k">Port:</span> <span class="v">{{ forensics.port if forensics.port is not none else 'default' }}</span></div>
+      <div><span class="k">Subdomains:</span> <span class="v">{{ forensics.subdomains | join('.') or '—' }}</span></div>
+      <div><span class="k">Path:</span> <span class="v">{{ forensics.path or '—' }}</span></div>
+      <div><span class="k">Query:</span> <span class="v">{{ forensics.query or '—' }}</span></div>
+      <div><span class="k">Domain length:</span> <span class="v">{{ forensics.domain_length }}</span></div>
+      <div><span class="k">URL length:</span> <span class="v">{{ forensics.url_length }}</span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><h3>Report metadata</h3></div>
+    <div class="col">
+      <div class="flex between"><span class="muted">Scan ID</span><span class="mono">#{{ scan.id }}</span></div>
+      <hr class="divider">
+      <div><span class="muted text-sm">URL</span><div class="mono text-sm" style="word-break:break-all;">{{ scan.url }}</div></div>
+      <hr class="divider">
+      <div class="flex between"><span class="muted">Protocol</span><span>{{ scan.protocol }}</span></div>
+      <hr class="divider">
+      <div class="flex between"><span class="muted">Scanned</span><span>{{ scan.created_at.strftime('%Y-%m-%d %H:%M UTC') }}</span></div>
+      <hr class="divider">
+      <div><span class="muted text-sm">Integrity hash (SHA-256)</span><div class="mono text-xs" style="word-break:break-all;">{{ scan.integrity_hash }}</div></div>
+    </div>
+    <p class="hint">The SHA-256 hash fingerprints the normalized URL. Hashing verifies
+      integrity; it is not encryption.</p>
+  </div>
+</div>
+
+<!-- Detected indicators (expandable) -->
+<h3 class="section-title">Detected indicators <span class="muted text-sm">({{ scan.indicators | length }})</span></h3>
+{% if scan.indicators %}
+  {% for ind in scan.indicators %}
+  <div class="indicator">
+    <div class="head" role="button" tabindex="0" aria-expanded="false">
+      <span class="name"><span class="chev">&#8250;</span> {{ ind.name }}</span>
+      <span class="flex" style="gap:10px;">
+        <span class="sev sev-{{ ind.severity }}">{{ ind.severity }}</span>
+        <span class="pts">+{{ ind.points }} pts</span>
+      </span>
+    </div>
+    <div class="body">
+      <p class="mb-0">{{ ind.explanation }}</p>
+      <p class="text-sm muted" style="margin-top:8px;"><strong>Recommended action:</strong>
+        Do not enter credentials or personal data if you did not expect this link; verify the
+        destination through a trusted channel.</p>
+    </div>
+  </div>
+  {% endfor %}
+{% else %}
+  <div class="card"><div class="empty"><div class="ic">&#128274;</div><h3>No suspicious indicators</h3><p class="muted">This URL did not trigger any risk rules. Stay cautious and verify the domain before entering sensitive information.</p></div></div>
+{% endif %}
+
+<div class="disclaimer">
+  <strong>Disclaimer:</strong> This is a heuristic, rule-based assessment. A SAFE result is
+  not a guarantee of safety, and a CRITICAL result is not proof of malice.
+</div>
+{% endblock %}
+{% block scripts %}
+<script nonce="{{ csp_nonce }}">
+  var printBtn = document.querySelector("[data-print]");
+  if (printBtn) printBtn.addEventListener("click", function () { window.print(); });
+  // Expand-all indicators on print so the report is complete on paper.
+  window.addEventListener("beforeprint", function () {
+    document.querySelectorAll(".indicator").forEach(function (i) { i.classList.add("open"); });
+  });
+</script>
+{% endblock %}

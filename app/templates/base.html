@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <meta name="description" content="{{ APP_NAME }} — {{ APP_TAGLINE }}. Explainable, rule-based URL risk assessment.">
+  <title>{% block title %}{{ APP_NAME }}{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v={{ APP_VERSION }}">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%2338bdf8'/><text x='16' y='22' font-size='16' font-family='Arial' font-weight='bold' fill='%2304121d' text-anchor='middle'>P</text></svg>">
+  {% block head_extra %}{% endblock %}
+</head>
+<body>
+  <nav class="navbar">
+    <div class="container navbar-inner">
+      <a class="brand" href="{{ url_for('main.index') }}">
+        <span class="logo">P</span> {{ APP_NAME }}
+      </a>
+      <div class="nav-links">
+        <a href="{{ url_for('main.awareness') }}">Awareness</a>
+        <a href="{{ url_for('main.insights') }}">Security Insights</a>
+        <a href="{{ url_for('main.integrity') }}">Integrity</a>
+        <button class="icon-btn" data-theme-toggle aria-label="Toggle theme"><span data-theme-icon>&#9728;</span></button>
+        {% if current_user.is_authenticated %}
+          <a href="{{ url_for('dashboard.user_dashboard') }}" class="btn btn-ghost btn-sm">Dashboard</a>
+        {% else %}
+          <a href="{{ url_for('auth.login') }}">Login</a>
+          <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-sm">Get Started</a>
+        {% endif %}
+      </div>
+    </div>
+  </nav>
+
+  <main class="container" style="padding-top: 24px;">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, message in messages %}
+        <span data-flash="{{ message }}" data-flash-type="{{ 'danger' if category == 'danger' else category }}" hidden></span>
+      {% endfor %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="footer container">
+    <p><strong>{{ APP_NAME }}</strong> &mdash; {{ APP_TAGLINE }} &middot; v{{ APP_VERSION }}</p>
+    <p class="muted text-sm">Educational, heuristic URL risk-assessment. Results are not
+      definitive proof that a website is malicious or safe.</p>
+  </footer>
+
+  <script nonce="{{ csp_nonce }}" src="{{ url_for('static', filename='js/main.js') }}?v={{ APP_VERSION }}"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

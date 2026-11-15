@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ code }} — {{ APP_NAME }}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v={{ APP_VERSION }}">
+</head>
+<body>
+{% set titles = {400: 'Bad Request', 401: 'Authentication Required', 403: 'Access Restricted', 404: 'Page Not Found', 429: 'Too Many Requests', 500: 'Something Went Wrong'} %}
+<div class="container" style="display:flex;min-height:100vh;align-items:center;justify-content:center;">
+  <div class="card center" style="max-width:520px;">
+    <a class="brand" href="{{ url_for('main.index') }}" style="justify-content:center;margin-bottom:16px;">
+      <span class="logo">P</span> {{ APP_NAME }}
+    </a>
+    <h1 style="font-size:3.4rem;margin:0;background:var(--brand-grad);-webkit-background-clip:text;background-clip:text;color:transparent;">{{ code }}</h1>
+    <h3 style="margin:4px 0 8px;">{{ titles.get(code, 'Error') }}</h3>
+    <p class="muted">{{ message }}</p>
+    <div class="flex" style="justify-content:center;">
+      <a href="{{ url_for('main.index') }}" class="btn btn-ghost">Home</a>
+      {% if current_user.is_authenticated %}
+      <a href="{{ url_for('dashboard.user_dashboard') }}" class="btn btn-primary">Back to Dashboard</a>
+      {% else %}
+      <a href="{{ url_for('auth.login') }}" class="btn btn-primary">Sign in</a>
+      {% endif %}
+    </div>
+  </div>
+</div>
+<script nonce="{{ csp_nonce }}" src="{{ url_for('static', filename='js/main.js') }}?v={{ APP_VERSION }}"></script>
+</body>
+</html>

@@ -1,0 +1,37 @@
+{% extends "shell.html" if current_user.is_authenticated else "base.html" %}
+{% block title %}Security Insights — {{ APP_NAME }}{% endblock %}
+{% block page_title %}Security Insights{% endblock %}
+
+{% block content %}
+<div class="card-head" style="align-items:flex-end;">
+  <div>
+    <span class="eyebrow">Detection rule library</span>
+    <h2 style="margin:6px 0 0;">Security Insights</h2>
+    <p class="muted mb-0">Every rule PhishShield uses — what it means, why attackers rely on
+      it, how we evaluate it, and what you should do.</p>
+  </div>
+</div>
+
+<div class="grid grid-2 mt-4">
+  {% for ind in indicators %}
+  <div class="card">
+    <div class="flex between">
+      <h3 style="margin:0;">{{ ind.name }}</h3>
+      <span class="sev sev-{{ ind.severity }}">{{ ind.severity }}</span>
+    </div>
+    <div class="flex" style="gap:8px;margin:8px 0 12px;">
+      <span class="chip">Weight +{{ ind.points }}</span>
+    </div>
+    <p class="text-sm"><strong>What it means.</strong> {{ ind.explanation }}</p>
+    <p class="text-sm"><strong>Why attackers use it.</strong> {{ ind.rationale }}</p>
+    <p class="text-sm mb-0"><strong>What to do.</strong> If you did not expect this link,
+      avoid it and verify the destination through a channel you trust.</p>
+  </div>
+  {% endfor %}
+</div>
+
+<div class="disclaimer">
+  These indicators are heuristics. Presence of an indicator raises risk but does not prove a
+  site is malicious; absence does not prove it is safe.
+</div>
+{% endblock %}

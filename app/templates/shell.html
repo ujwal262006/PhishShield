@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <title>{% block title %}{{ APP_NAME }}{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v={{ APP_VERSION }}">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%2338bdf8'/><text x='16' y='22' font-size='16' font-family='Arial' font-weight='bold' fill='%2304121d' text-anchor='middle'>P</text></svg>">
+  {% block head_extra %}{% endblock %}
+</head>
+<body>
+  <div class="shell">
+    <!-- Sidebar -->
+    <aside class="sidebar" aria-label="Primary navigation">
+      <a class="brand" href="{{ url_for('dashboard.user_dashboard') }}">
+        <span class="logo">P</span> {{ APP_NAME }}
+      </a>
+
+      <div class="side-group">Workspace</div>
+      {% set nav = active_nav | default('') %}
+      <a class="side-link {{ 'active' if nav == 'dashboard' }}" href="{{ url_for('dashboard.user_dashboard') }}"><span class="ic">&#9632;</span> Dashboard</a>
+      <a class="side-link {{ 'active' if nav == 'scanner' }}" href="{{ url_for('scan.scanner') }}"><span class="ic">&#128269;</span> URL Scanner</a>
+      <a class="side-link {{ 'active' if nav == 'history' }}" href="{{ url_for('scan.history') }}"><span class="ic">&#128203;</span> Scan History</a>
+
+      <div class="side-group">Learn</div>
+      <a class="side-link {{ 'active' if nav == 'insights' }}" href="{{ url_for('main.insights') }}"><span class="ic">&#128161;</span> Security Insights</a>
+      <a class="side-link {{ 'active' if nav == 'integrity' }}" href="{{ url_for('main.integrity') }}"><span class="ic">&#128273;</span> Integrity Check</a>
+      <a class="side-link {{ 'active' if nav == 'awareness' }}" href="{{ url_for('main.awareness') }}"><span class="ic">&#127891;</span> Awareness</a>
+      <a class="side-link {{ 'active' if nav == 'methodology' }}" href="{{ url_for('main.methodology') }}"><span class="ic">&#9878;</span> Risk Methodology</a>
+
+      <div class="side-group">Account</div>
+      <a class="side-link {{ 'active' if nav == 'settings' }}" href="{{ url_for('settings.settings_page') }}"><span class="ic">&#9881;</span> Settings</a>
+
+      {% if current_user.is_admin %}
+      <div class="side-group">Administration</div>
+      <a class="side-link {{ 'active' if nav == 'admin_dashboard' }}" href="{{ url_for('admin.admin_dashboard') }}"><span class="ic">&#128202;</span> Admin Dashboard</a>
+      <a class="side-link {{ 'active' if nav == 'admin_scans' }}" href="{{ url_for('admin.admin_scans') }}"><span class="ic">&#128200;</span> All Scans</a>
+      <a class="side-link {{ 'active' if nav == 'admin_events' }}" href="{{ url_for('admin.admin_security_events') }}"><span class="ic">&#128276;</span> Security Events</a>
+      <a class="side-link {{ 'active' if nav == 'admin_users' }}" href="{{ url_for('admin.admin_users') }}"><span class="ic">&#128101;</span> Users</a>
+      <a class="side-link {{ 'active' if nav == 'admin_health' }}" href="{{ url_for('admin.system_health') }}"><span class="ic">&#128994;</span> System Health</a>
+      {% endif %}
+
+      <div style="flex:1"></div>
+      <div class="text-xs muted" style="padding:12px;">v{{ APP_VERSION }}</div>
+    </aside>
+    <div class="sidebar-backdrop"></div>
+
+    <!-- Main -->
+    <div class="shell-main">
+      <header class="topbar">
+        <div class="flex">
+          <button class="icon-btn hamburger" data-sidebar-toggle aria-label="Toggle menu">&#9776;</button>
+          <span class="content-title">{% block page_title %}{{ APP_NAME }}{% endblock %}</span>
+        </div>
+        <div class="flex">
+          <button class="icon-btn" data-cmdk-open aria-label="Open command palette" title="Command palette (Ctrl+K)">&#8984;K</button>
+          <button class="icon-btn" data-theme-toggle aria-label="Toggle theme"><span data-theme-icon>&#9728;</span></button>
+          <div class="usermenu">
+            <div class="usermenu-trigger" tabindex="0" role="button" aria-label="User menu">
+              <span class="avatar">{{ current_user.username[0] | upper }}</span>
+              <span class="hide-sm">{{ current_user.username }}</span>
+            </div>
+            <div class="usermenu-panel">
+              <div class="text-xs muted" style="padding:6px 12px;">Signed in as<br><strong>{{ current_user.username }}</strong> ({{ current_user.role }})</div>
+              <hr class="divider" style="margin:6px 0;">
+              <a href="{{ url_for('settings.settings_page') }}">Settings</a>
+              <a href="{{ url_for('main.methodology') }}">Risk Methodology</a>
+              <a href="{{ url_for('auth.logout') }}">Log out</a>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <main class="page">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% for category, message in messages %}
+            <span data-flash="{{ message }}" data-flash-type="{{ 'danger' if category == 'danger' else category }}" hidden></span>
+          {% endfor %}
+        {% endwith %}
+        {% block content %}{% endblock %}
+      </main>
+    </div>
+  </div>
+
+  <script nonce="{{ csp_nonce }}">
+    window.PHISHSHIELD_COMMANDS = [
+      { label: "Dashboard", url: "{{ url_for('dashboard.user_dashboard') }}", icon: "\u25A0" },
+      { label: "URL Scanner", url: "{{ url_for('scan.scanner') }}", icon: "\uD83D\uDD0D" },
+      { label: "Scan History", url: "{{ url_for('scan.history') }}", icon: "\uD83D\uDCCB" },
+      { label: "Security Insights", url: "{{ url_for('main.insights') }}", icon: "\uD83D\uDCA1" },
+      { label: "Integrity Check", url: "{{ url_for('main.integrity') }}", icon: "\uD83D\uDD11" },
+      { label: "Awareness", url: "{{ url_for('main.awareness') }}", icon: "\uD83C\uDF93" },
+      { label: "Risk Methodology", url: "{{ url_for('main.methodology') }}", icon: "\u2696" },
+      { label: "Settings", url: "{{ url_for('settings.settings_page') }}", icon: "\u2699" }
+      {% if current_user.is_admin %},
+      { label: "Admin Dashboard", url: "{{ url_for('admin.admin_dashboard') }}", icon: "\uD83D\uDCCA" },
+      { label: "All Scans (Admin)", url: "{{ url_for('admin.admin_scans') }}", icon: "\uD83D\uDCC8" },
+      { label: "Security Events (Admin)", url: "{{ url_for('admin.admin_security_events') }}", icon: "\uD83D\uDD14" },
+      { label: "Users (Admin)", url: "{{ url_for('admin.admin_users') }}", icon: "\uD83D\uDC65" },
+      { label: "System Health (Admin)", url: "{{ url_for('admin.system_health') }}", icon: "\uD83D\uDFE2" }
+      {% endif %},
+      { label: "Log out", url: "{{ url_for('auth.logout') }}", icon: "\u23FB" }
+    ];
+  </script>
+  <script nonce="{{ csp_nonce }}" src="{{ url_for('static', filename='js/main.js') }}?v={{ APP_VERSION }}"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

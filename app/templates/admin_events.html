@@ -1,0 +1,59 @@
+{% extends "shell.html" %}
+{% block title %}Security Events — {{ APP_NAME }} Admin{% endblock %}
+{% block page_title %}Security Events{% endblock %}
+
+{% set danger_events = ['LOGIN_FAILED', 'ACCOUNT_LOCKED', 'UNAUTHORIZED_ACCESS', 'CRITICAL_RISK_DETECTED'] %}
+{% set warn_events = ['HIGH_RISK_DETECTED', 'USER_STATUS_CHANGED', 'USER_ROLE_CHANGED', 'PASSWORD_CHANGED'] %}
+
+{% block content %}
+<div class="card-head"><h2 style="margin:0;">Security event log</h2></div>
+
+<form method="GET" action="{{ url_for('admin.admin_security_events') }}" class="card mt-4">
+  <div class="grid grid-3">
+    <div class="form-group" style="margin:0;">
+      <label for="event_type">Event type</label>
+      <select id="event_type" name="event_type">
+        <option value="">All</option>
+        {% for t in ['LOGIN_SUCCESS','LOGIN_FAILED','LOGOUT','REGISTER','SCAN','HIGH_RISK_DETECTED','CRITICAL_RISK_DETECTED','UNAUTHORIZED_ACCESS','ACCOUNT_LOCKED','PASSWORD_CHANGED','USER_STATUS_CHANGED','USER_ROLE_CHANGED'] %}
+          <option value="{{ t }}" {% if event_type == t %}selected{% endif %}>{{ t }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="form-group flex" style="margin:0;align-items:flex-end;">
+      <button type="submit" class="btn btn-primary btn-sm">Filter</button>
+      <a href="{{ url_for('admin.admin_security_events') }}" class="btn btn-ghost btn-sm">Reset</a>
+    </div>
+  </div>
+</form>
+
+<div class="card mt-4">
+  {% if pagination.items %}
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>ID</th><th>Time</th><th>Severity</th><th>Type</th><th>User</th><th>Description</th></tr></thead>
+      <tbody>
+        {% for e in pagination.items %}
+        {% set sev = 'HIGH' if e.event_type in danger_events else ('MEDIUM' if e.event_type in warn_events else 'LOW') %}
+        <tr>
+          <td>#{{ e.id }}</td>
+          <td class="text-sm nowrap">{{ e.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+          <td><span class="sev sev-{{ sev }}">{{ sev }}</span></td>
+          <td><span class="chip">{{ e.event_type }}</span></td>
+          <td>{{ e.user_id if e.user_id else '—' }}</td>
+          <td class="text-sm">{{ e.description }}{% if e.metadata_dict %}<br><span class="text-xs muted mono">{{ e.metadata_dict }}</span>{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="pagination">
+    {% if pagination.has_prev %}<a href="{{ url_for('admin.admin_security_events', page=pagination.prev_num, event_type=event_type) }}">&laquo; Prev</a>{% endif %}
+    <span class="cur">Page {{ pagination.page }} of {{ pagination.pages }}</span>
+    {% if pagination.has_next %}<a href="{{ url_for('admin.admin_security_events', page=pagination.next_num, event_type=event_type) }}">Next &raquo;</a>{% endif %}
+  </div>
+  {% else %}
+    <div class="empty"><div class="ic">&#128276;</div><h3>No security events</h3><p class="muted">No events match the current filter.</p></div>
+  {% endif %}
+</div>
+<p class="hint">Event metadata never contains passwords, tokens, or other credentials.</p>
+{% endblock %}
